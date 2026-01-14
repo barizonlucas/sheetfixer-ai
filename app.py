@@ -4,6 +4,10 @@ import json
 import google.generativeai as genai
 from dotenv import load_dotenv
 
+# --- DIAGNÓSTICO (Apagar depois) ---
+st.write(f"📚 Versão da Biblioteca Google: {genai.__version__}")
+# -----------------------------------
+
 # Load environment variables from the .env file
 load_dotenv()
 
