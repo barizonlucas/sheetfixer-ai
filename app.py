@@ -1,31 +1,29 @@
 import streamlit as st
 import os
 import json
-import google.generativeai as genai
+import requests
 from dotenv import load_dotenv
 
-# 1. Configuração da Página (DEVE SER A PRIMEIRA COISA)
+# 1. Configuração da Página (Sempre a primeira linha)
 st.set_page_config(
     page_title="SheetFixer.AI",
     page_icon="🤖",
     layout="centered"
 )
 
-# 2. Carrega variáveis e API Key
+# 2. Carrega variáveis
 load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 
-# --- Lógica de Internacionalização (i18n) ---
+# --- Internacionalização (i18n) ---
 def load_translation(language):
     try:
         path = f"locales/{language}.json"
         with open(path, "r", encoding="utf-8") as file:
             return json.load(file)
     except FileNotFoundError:
-        st.error(f"Arquivo de idioma não encontrado: locales/{language}.json")
-        st.stop()
+        return {} # Retorna vazio para não quebrar se falhar
 
-# Seletor de Idioma (Agora no lugar certo, na Sidebar para não poluir)
 language_options = {
     "🇬🇧 English": "en",
     "🇧🇷 Português": "pt",
@@ -36,85 +34,82 @@ if 'language' not in st.session_state:
     st.session_state.language = "🇬🇧 English"
 
 with st.sidebar:
+    st.header("SheetFixer.AI")
     selected_language_name = st.radio(
         "Language / Idioma",
         options=list(language_options.keys()),
-        index=0
+        index=1 # Começa em Português
     )
     st.divider()
+    st.markdown("Developed by Lucas Barizon")
 
 language_code = language_options[selected_language_name]
 lang = load_translation(language_code)
 
-# Atualiza textos da sidebar
-st.sidebar.markdown(lang.get("sidebar_content", "Instructions..."))
+# Fallback de textos caso o JSON falhe
+def t(key, default):
+    return lang.get(key, default)
 
-# --- Backend (IA) ---
-def get_language_for_tool(tool):
-    if tool in ["VBA", "Excel"]:
-        return "vbnet"
-    elif tool in ["Google Sheets", "Apps Script"]:
-        return "javascript"
-    return "plaintext"
-
-def generate_solution(problem, tool):
+# --- Backend (REST API Direta) ---
+def generate_solution_rest(problem, tool, api_key):
     if not api_key:
-        return "⚠️ API Key missing. Please configure .env or Secrets."
+        return "⚠️ Erro: API Key não encontrada. Configure o arquivo .env ou Secrets."
 
-    # Configuração Blindada da IA
+    # AQUI ESTÁ A MÁGICA: Usando o modelo 2.5 que você descobriu
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    
+    headers = {"Content-Type": "application/json"}
+    
+    # Prompt Otimizado
+    prompt_completo = f"""
+    ROLE: Senior Spreadsheet Expert.
+    TASK: Provide solution for '{tool}'.
+    LANGUAGE: Respond in {selected_language_name}.
+    USER PROBLEM: {problem}
+    RULES: 1. Code/Formula ONLY. 2. Brief explanation.
+    """
+
+    payload = {
+        "contents": [{"parts": [{"text": prompt_completo}]}]
+    }
+
     try:
-        genai.configure(api_key=api_key)
+        response = requests.post(url, headers=headers, json=payload)
         
-        system_instruction = f"""
-        ROLE: Senior Spreadsheet Expert.
-        TASK: Provide the exact formula or code for '{tool}'.
-        LANGUAGE: Respond in {selected_language_name}.
-        RULES:
-        1. ONLY the code/formula.
-        2. Brief explanation (1 line).
-        3. No conversational filler.
-        """
-        
-        # Tentativa com o modelo Flash (Rápido)
-        # Se falhar, você pode trocar por 'gemini-1.5-pro' ou 'gemini-pro' para testar
-        model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash',
-            system_instruction=system_instruction
-        )
-        
-        response = model.generate_content(f"Problem: {problem}")
-        return response.text
-        
+        if response.status_code == 200:
+            return response.json()['candidates'][0]['content']['parts'][0]['text']
+        else:
+            return f"❌ Erro do Google ({response.status_code}): {response.text}"
+            
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"❌ Erro de Conexão: {str(e)}"
 
-# --- Frontend (Interface) ---
-st.title(lang["title"])
-st.caption(lang["caption"])
+# --- Frontend ---
+st.title("SheetFixer.AI 🤖")
+st.caption(t("caption", "Seu assistente inteligente de planilhas"))
 
 with st.container(border=True):
     tool = st.selectbox(
-        lang["tool_selector_label"],
+        t("tool_selector_label", "Ferramenta"),
         ("Excel", "Google Sheets", "VBA", "Apps Script")
     )
 
     user_problem = st.text_area(
-        lang["problem_description_label"],
+        t("problem_description_label", "Descreva o problema"),
         height=150,
-        placeholder=lang["problem_description_placeholder"]
+        placeholder="Ex: Somar A e B..."
     )
 
-    if st.button(lang["generate_solution_button"], type="primary", use_container_width=True):
+    if st.button(t("generate_solution_button", "Gerar Solução"), type="primary", use_container_width=True):
         if not user_problem:
-            st.warning(lang["warning_message"])
+            st.warning("Descreva o problema primeiro.")
         else:
-            with st.spinner(lang["spinner_text"]):
-                solution = generate_solution(user_problem, tool)
+            with st.spinner("Processando..."):
+                # Chama a função que usa o link do 2.5
+                solution = generate_solution_rest(user_problem, tool, api_key)
                 
-                if solution:
-                    if "Error:" in solution or "404" in solution:
-                        st.error(solution)
-                        st.info("Dica: Se o erro 404 persistir, tente gerar uma NOVA API Key no Google AI Studio.")
-                    else:
-                        st.subheader(lang["solution_subheader"])
-                        st.code(solution, language=get_language_for_tool(tool))
+                if "Erro" in solution:
+                    st.error(solution)
+                else:
+                    st.subheader("Solução:")
+                    st.code(solution)
