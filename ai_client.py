@@ -25,7 +25,7 @@ def generate_solution(problem_description: str, tool: str = "Excel/Google Sheets
     """
     try:
         configure_ai_client()
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model = genai.GenerativeModel('gemini-1.5-flash')
 
         prompt = f"""
         You are a spreadsheet expert specializing in {tool}. Your task is to help users solve problems in their spreadsheets.
