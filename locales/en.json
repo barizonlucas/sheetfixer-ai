@@ -1,0 +1,19 @@
+{
+    "page_title": "SheetFixer.AI",
+    "page_icon": "🤖",
+    "title": "SheetFixer.AI 🤖",
+    "caption": "Your smart spreadsheet assistant",
+    "tool_selector_label": "1. Which tool are you using?",
+    "problem_description_label": "2. Describe the problem or task you want to solve:",
+    "problem_description_placeholder": "E.g.: I need a formula that sums the values in column A only if column B contains the word 'Sold'.",
+    "generate_solution_button": "Generate Solution",
+    "spinner_text": "🤖 Thinking of the best solution...",
+    "solution_subheader": "Proposed Solution:",
+    "warning_message": "Please describe your problem in the text area above.",
+    "api_key_error": "Gemini API key (GEMINI_API_KEY) not found. Please create a `.env` file in the project root and add your key. E.g.: `GEMINI_API_KEY='YOUR_KEY_HERE'`",
+    "api_config_error": "Error configuring the Gemini API: {e}",
+    "api_call_error": "An error occurred while calling the API: {e}",
+    "language_selector_label": "Language",
+    "sidebar_title": "How to use",
+    "sidebar_content": "1.  **Select the tool** you are working with (Excel, Google Sheets, etc.).\n2.  **Describe the problem** or task you want to accomplish in the text box. Be as specific as possible.\n3.  **Click 'Generate Solution'**.\n\n**Prompt Examples:**\n- Sum the values in column A if the corresponding value in column B is 'Completed'.\n- Find the average of the 10 largest values in column C.\n- Create a script that sends an email when a cell in column F is updated to 'Send'."
+}

@@ -1,0 +1,19 @@
+{
+    "page_title": "SheetFixer.AI",
+    "page_icon": "🤖",
+    "title": "SheetFixer.AI 🤖",
+    "caption": "Tu asistente inteligente de hojas de cálculo",
+    "tool_selector_label": "1. ¿Qué herramienta estás utilizando?",
+    "problem_description_label": "2. Describe el problema o tarea que quieres resolver:",
+    "problem_description_placeholder": "Ej: Necesito una fórmula que sume los valores de la columna A solo si la columna B contiene la palabra 'Vendido'.",
+    "generate_solution_button": "Generar Solución",
+    "spinner_text": "🤖 Pensando en la mejor solución...",
+    "solution_subheader": "Solución Propuesta:",
+    "warning_message": "Por favor, describe tu problema en el área de texto de arriba.",
+    "api_key_error": "Clave de API de Gemini (GEMINI_API_KEY) no encontrada. Crea un archivo `.env` en la raíz del proyecto y agrega tu clave. Por ejemplo: `GEMINI_API_KEY='TU_CLAVE_AQUÍ'`",
+    "api_config_error": "Error al configurar la API de Gemini: {e}",
+    "api_call_error": "Ocurrió un error al llamar a la API: {e}",
+    "language_selector_label": "Idioma",
+    "sidebar_title": "Cómo usar",
+    "sidebar_content": "1.  **Selecciona la herramienta** con la que estás trabajando (Excel, Google Sheets, etc.).\n2.  **Describe el problema** o tarea que quieres realizar en el cuadro de texto. Sé lo más específico posible.\n3.  **Haz clic en 'Generar Solución'**.\n\n**Ejemplos de Prompts:**\n- Sumar los valores de la columna A si el valor correspondiente en la columna B es 'Completado'.\n- Encontrar el promedio de los 10 valores más grandes de la columna C.\n- Crear un script que envíe un correo electrónico cuando una celda en la columna F se actualice a 'Enviar'."
+}
