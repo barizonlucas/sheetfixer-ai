@@ -4,100 +4,91 @@ import json
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-# --- DIAGNÓSTICO (Apagar depois) ---
-st.write(f"📚 Versão da Biblioteca Google: {genai.__version__}")
-# -----------------------------------
+# 1. Configuração da Página (DEVE SER A PRIMEIRA COISA)
+st.set_page_config(
+    page_title="SheetFixer.AI",
+    page_icon="🤖",
+    layout="centered"
+)
 
-# Load environment variables from the .env file
+# 2. Carrega variáveis e API Key
 load_dotenv()
+api_key = os.getenv("GEMINI_API_KEY")
 
-# --- Internationalization (i18n) ---
+# --- Lógica de Internacionalização (i18n) ---
 def load_translation(language):
-    """Loads the translation file for the selected language."""
-    path = f"locales/{language}.json"
-    with open(path, "r", encoding="utf-8") as file:
-        return json.load(file)
+    try:
+        path = f"locales/{language}.json"
+        with open(path, "r", encoding="utf-8") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        st.error(f"Arquivo de idioma não encontrado: locales/{language}.json")
+        st.stop()
 
-# Language selection with flags in the header
+# Seletor de Idioma (Agora no lugar certo, na Sidebar para não poluir)
 language_options = {
     "🇬🇧 English": "en",
     "🇧🇷 Português": "pt",
     "🇪🇸 Español": "es"
 }
-# Use session state to remember the selected language
+
 if 'language' not in st.session_state:
     st.session_state.language = "🇬🇧 English"
 
-selected_language_name = st.radio(
-    "Language",
-    options=list(language_options.keys()),
-    horizontal=True,
-    label_visibility="collapsed",
-    key='language'
-)
+with st.sidebar:
+    selected_language_name = st.radio(
+        "Language / Idioma",
+        options=list(language_options.keys()),
+        index=0
+    )
+    st.divider()
+
 language_code = language_options[selected_language_name]
 lang = load_translation(language_code)
 
+# Atualiza textos da sidebar
+st.sidebar.markdown(lang.get("sidebar_content", "Instructions..."))
 
-# Streamlit page configuration
-st.set_page_config(
-    page_title=lang["page_title"],
-    page_icon=lang["page_icon"],
-    layout="centered"
-)
-
-# --- Sidebar ---
-st.sidebar.header(lang["sidebar_title"])
-st.sidebar.markdown(lang["sidebar_content"])
-
-
-# --- Backend ---
+# --- Backend (IA) ---
 def get_language_for_tool(tool):
-    """Returns the language for st.code syntax highlighting."""
     if tool in ["VBA", "Excel"]:
         return "vbnet"
     elif tool in ["Google Sheets", "Apps Script"]:
         return "javascript"
     return "plaintext"
 
-# Load API KEY and configure the model
-try:
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        st.error(lang["api_key_error"])
-        st.stop()
-    genai.configure(api_key=api_key)
-except Exception as e:
-    st.error(lang["api_config_error"].format(e=e))
-    st.stop()
-
-
 def generate_solution(problem, tool):
-    """
-    Calls the Gemini API to generate a solution for the user's problem.
-    """
-    system_instruction = f"""
-    You are a Senior Spreadsheet Specialist. Your sole task is to provide the exact formula or code for the '{tool}' tool that solves the user's problem.
-    **Strict Instructions:**
-    1.  **DO NOT** use phrases like 'Sure, here is the formula', 'You can use the following code', or any other introduction.
-    2.  Provide **ONLY** the formula or code block.
-    3.  After the formula/code, add an **extremely brief** and direct explanation (1-2 lines maximum) of what it does.
-    4.  DO NOT add usage examples or additional notes.
-    Get straight to the point.
-    """
-    model = genai.GenerativeModel(
-        model_name='gemini-1.5-flash',
-        system_instruction=system_instruction
-    )
+    if not api_key:
+        return "⚠️ API Key missing. Please configure .env or Secrets."
+
+    # Configuração Blindada da IA
     try:
+        genai.configure(api_key=api_key)
+        
+        system_instruction = f"""
+        ROLE: Senior Spreadsheet Expert.
+        TASK: Provide the exact formula or code for '{tool}'.
+        LANGUAGE: Respond in {selected_language_name}.
+        RULES:
+        1. ONLY the code/formula.
+        2. Brief explanation (1 line).
+        3. No conversational filler.
+        """
+        
+        # Tentativa com o modelo Flash (Rápido)
+        # Se falhar, você pode trocar por 'gemini-1.5-pro' ou 'gemini-pro' para testar
+        model = genai.GenerativeModel(
+            model_name='gemini-1.5-flash',
+            system_instruction=system_instruction
+        )
+        
         response = model.generate_content(f"Problem: {problem}")
         return response.text
+        
     except Exception as e:
-        st.error(lang["api_call_error"].format(e=e))
-        return None
+        return f"Error: {str(e)}"
 
-# --- Frontend Interface ---
-
+# --- Frontend (Interface) ---
 st.title(lang["title"])
 st.caption(lang["caption"])
 
@@ -114,13 +105,16 @@ with st.container(border=True):
     )
 
     if st.button(lang["generate_solution_button"], type="primary", use_container_width=True):
-        if user_problem and tool:
+        if not user_problem:
+            st.warning(lang["warning_message"])
+        else:
             with st.spinner(lang["spinner_text"]):
                 solution = generate_solution(user_problem, tool)
+                
                 if solution:
-                    st.subheader(lang["solution_subheader"])
-                    language = get_language_for_tool(tool)
-                    st.code(solution, language=language)
-        else:
-            st.warning(lang["warning_message"])
-
+                    if "Error:" in solution or "404" in solution:
+                        st.error(solution)
+                        st.info("Dica: Se o erro 404 persistir, tente gerar uma NOVA API Key no Google AI Studio.")
+                    else:
+                        st.subheader(lang["solution_subheader"])
+                        st.code(solution, language=get_language_for_tool(tool))
