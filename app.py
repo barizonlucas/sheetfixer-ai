@@ -72,7 +72,7 @@ def generate_solution_rest(problem, tool, api_key, language_name):
     if not api_key:
         return {"error": t("error_api_key_not_found", "⚠️ API Key não encontrada. Configure o arquivo .env.")}
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
     headers = {"Content-Type": "application/json"}
     
     # Prompt otimizado para exigir uma resposta JSON
