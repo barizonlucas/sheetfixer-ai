@@ -97,7 +97,7 @@ def generate_solution_rest(problem, tool, api_key, language_name):
     """
 
     payload = {
-        "contents": [{"parts": [{"text": prompt_completo}]}]}
+        "contents": [{"parts": [{"text": prompt_completo}]}]
     }
 
     try:
