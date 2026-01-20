@@ -7,3 +7,6 @@ __pycache__/
 .idea/
 .vscode/
 *.swp
+
+# Assets
+assets/

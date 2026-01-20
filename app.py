@@ -4,199 +4,210 @@ import json
 import requests
 from dotenv import load_dotenv
 import re
-from streamlit.components.v1 import html
 
-# 1. Configuração da Página (Sempre a primeira linha)
+# 1. Page Configuration (MUST BE THE FIRST STREAMLIT COMMAND)
 st.set_page_config(
-    page_title="SheetFixer.AI",
-    page_icon="🤖",
+    page_title="Ekual",
+    page_icon="🟰",
     layout="centered"
 )
 
-# 2. Carrega variáveis
+# 2. Load Environment Variables
 load_dotenv()
-api_key = os.getenv("GEMINI_API_KEY")
+API_KEY = os.getenv("GEMINI_API_KEY")
+BMC_LINK = os.getenv("BMC_LINK")
+PIX_QR_PATH = os.getenv("PIX_QR_PATH")
 
-# --- Internacionalização (i18n) ---
-def load_translation(language):
+# --- Internationalization (i18n) ---
+def load_translation(language_code):
+    """Loads the JSON translation file for the specified language code."""
     try:
-        path = f"locales/{language}.json"
+        path = f"locales/{language_code}.json"
         with open(path, "r", encoding="utf-8") as file:
             return json.load(file)
     except FileNotFoundError:
-        # Fallback para inglês se a tradução não for encontrada
-        try:
-            with open("locales/en.json", "r", encoding="utf-8") as file:
-                return json.load(file)
-        except FileNotFoundError:
-            return {} # Retorna vazio para não quebrar se falhar
+        return {}  # Return empty if file not found
 
-language_options = {
+LANGUAGE_OPTIONS = {
     "🇬🇧 English": "en",
     "🇧🇷 Português": "pt",
     "🇪🇸 Español": "es"
 }
 
-language_map_for_ai = {
-    "en": "English",
-    "pt": "Portuguese",
-    "es": "Spanish",
-}
+# Set default language in session state
+if 'language_code' not in st.session_state:
+    st.session_state.language_code = "pt"
 
-# Define o idioma padrão na session_state se não existir
-if 'language' not in st.session_state:
-    st.session_state.language = "pt" # Default to Portuguese
-
+# Callback to update language immediately upon selection
 def update_language():
-    """Callback function to update the language in session state."""
-    st.session_state.language = language_options[st.session_state.lang_selector]
+    st.session_state.language_code = LANGUAGE_OPTIONS[st.session_state.selected_language]
 
-# Carrega a tradução com base no estado da sessão
-lang = load_translation(st.session_state.language)
-
-# Função de tradução com fallback
-def t(key, default):
-    return lang.get(key, default)
-
-# UI da Sidebar
+# --- SIDEBAR: Configuration and Support ---
 with st.sidebar:
-    st.header(t("sidebar_header", "SheetFixer.AI"))
+    st.header("Ekual 🟰")
     
-    lang_names = list(language_options.keys())
-    # Encontra o nome do idioma atual a partir do código no estado da sessão
-    current_lang_name = next((name for name, code in language_options.items() if code == st.session_state.language), "🇧🇷 Português")
-    current_lang_index = lang_names.index(current_lang_name)
-
-    # Widget de rádio para seleção de idioma com callback
-    st.radio(
-        t("language_selector_label", "Language / Idioma"),
-        options=lang_names,
-        index=current_lang_index,
-        key='lang_selector',  # Chave para acessar o valor do widget
-        on_change=update_language  # Função a ser chamada na mudança
+    # Language Selector
+    # Find the key (e.g., "🇧🇷 Português") based on the current value (e.g., "pt")
+    current_label = next(
+        (k for k, v in LANGUAGE_OPTIONS.items() if v == st.session_state.language_code),
+        "🇧🇷 Português"
     )
-
+    
+    st.radio(
+        "Language / Idioma",
+        options=list(LANGUAGE_OPTIONS.keys()),
+        index=list(LANGUAGE_OPTIONS.keys()).index(current_label),
+        key="selected_language",
+        on_change=update_language
+    )
+    
     st.divider()
-    st.markdown(t("developed_by", "Developed by Lucas Barizon"))
-
-    # Condicional para exibir o botão ou o QR Code
-    if st.session_state.language == "pt":
-        if os.path.exists("assets/pix_qrcode.jpeg"):
-            st.image("assets/pix_qrcode.jpeg", width=280)
-            st.markdown(f"<p style='text-align: center;'>{t('buy_me_a_coffee_pix', 'Me pague um café')}</p>", unsafe_allow_html=True)
+    
+    # --- MONETIZATION AREA ---
+    st.markdown("### ☕ Apoie o projeto")
+    
+    if st.session_state.language_code == "pt":
+        # Pix Logic (Show image if exists, otherwise show key)
+        st.markdown("🇧🇷 **Pix (Brasil):**")
+        if os.path.exists(PIX_QR_PATH):
+            st.image(PIX_QR_PATH, caption="Escaneie para doar", width="stretch")
         else:
-            st.warning(t("warning_qr_code_not_found", "A imagem do QR Code (assets/pix_qrcode.jpeg) não foi encontrada."))
+            # Fallback if image fails to load
+            st.code("lucasbarizon@gmail.com", language="text")
     else:
-        buy_me_a_coffee_script = """
-<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="lucasbariza" data-color="#FFDD00" data-emoji="" data-font="Cookie" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff"></script>
-"""
-        html(buy_me_a_coffee_script, height=70)
+        # Buy Me a Coffee Button for non-PT languages
+        st.markdown(f"""
+        <a href="{BMC_LINK}" target="_blank">
+            <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 40px !important;width: 145px !important;" >
+        </a>
+        """, unsafe_allow_html=True)
+            
+    st.divider()
+    st.caption("Powered by Lucas Bariza")
 
-# --- Backend (REST API Direta) ---
-def generate_solution_rest(problem, tool, api_key, language_name):
+# Load translations
+translations = load_translation(st.session_state.language_code)
+
+def t(key, default):
+    """Helper function to get translation or default value."""
+    return translations.get(key, default)
+
+# --- BACKEND: REST API (Gemini 2.5 Flash) ---
+def generate_solution(problem, tool, api_key, lang_code):
+    """Generates a solution using the Gemini API."""
     if not api_key:
-        return {"error": t("api_key_error", "⚠️ API Key não encontrada. Configure o arquivo .env.")}
+        return {"error": "⚠️ API Key não encontrada. Verifique o arquivo .env."}
 
+    # Direct URL for Gemini 2.5 Flash
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
     headers = {"Content-Type": "application/json"}
     
-    # Prompt otimizado para exigir uma resposta JSON
-    prompt_completo = f"""
-    ROLE: Senior Spreadsheet Expert.
-    TASK: Provide a JSON-only response for a '{tool}' problem.
-    LANGUAGE: The content of the JSON fields must be in {language_name}.
-    USER PROBLEM: "{problem}"
-    
-    OUTPUT FORMAT: Your response MUST be a single, raw JSON object (no markdown, no extra text, no code block markers like ```json).
-    The JSON object must have the following keys:
-    - "code": A string containing ONLY the formula or code script.
-    - "explanation": A didactic explanation of the solution, simple and easy to understand (like 'for dummies'), suitable for laypeople. Do NOT use terms like 'for dummies' or 'laypeople' in the response.
-    - "tips": A short list of strings with step-by-step instructions on how to apply the solution.
+    # Map language code to full name for the prompt
+    language_map = {"pt": "Portuguese", "en": "English", "es": "Spanish"}
+    full_lang = language_map.get(lang_code, "English")
 
-    EXAMPLE RESPONSE:
-    {{
-        "code": "=SUM(A1:A10)",
-        "explanation": "This formula calculates the sum of all values in cells A1 through A10.",
-        "tips": ["Click on the cell where you want the result.", "Type the formula and press Enter."]
-    }}
+    full_prompt = f"""
+    ROLE: You are Ekual, a world-class spreadsheet expert in {tool}.
+    TASK: Solve the user's problem strictly.
+    OUTPUT FORMAT: JSON ONLY. No markdown blocks.
+    JSON KEYS:
+    - "code": The exact formula or script code.
+    - "explanation": A concise explanation (max 2 lines) in {full_lang}.
+    - "tips": A list of 2 short actionable tips or steps to apply the solution in {full_lang}.
+
+    USER PROBLEM: {problem}
     """
 
     payload = {
-        "contents": [{"parts": [{"text": prompt_completo}]}]
+        "contents": [{"parts": [{"text": full_prompt}]}]
     }
 
     try:
-        response = requests.post(url, headers=headers, json=payload, timeout=120)
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
         
         if response.status_code == 200:
-            return response.json()
+            try:
+                return response.json()['candidates'][0]['content']['parts'][0]['text']
+            except (KeyError, IndexError):
+                return {"error": "Erro ao ler resposta da IA."}
         else:
-            return {"error": f"❌ {t('error_google_api', 'Erro do Google')} ({response.status_code}): {response.text}"}
+            return {"error": f"Erro do Google ({response.status_code}): {response.text}"}
             
-    except requests.exceptions.RequestException as e:
-        return {"error": f"❌ {t('error_connection', 'Erro de Conexão')}: {str(e)}"}
+    except Exception as e:
+        return {"error": f"Erro de Conexão: {str(e)}"}
 
-# --- Frontend ---
-st.title(t("title", "SheetFixer.AI 🤖"))
-st.caption(t("caption", "Seu assistente inteligente para planilhas"))
+# --- FRONTEND: Interface ---
+st.title("Ekual 🟰")
+
+# Dynamic Slogan
+SLOGANS = {
+    "en": "Your question becomes a formula.",
+    "pt": "Sua dúvida vira fórmula.",
+    "es": "Tu duda se convierte en fórmula."
+}
+st.subheader(SLOGANS.get(st.session_state.language_code, SLOGANS["en"]))
 
 with st.container(border=True):
-    tool = st.selectbox(
-        t("tool_selector_label", "Selecione a Ferramenta"),
-        ("Excel", "Google Sheets", "VBA", "Apps Script"),
-        key="tool_selector"
+    selected_tool = st.selectbox(
+        t("tool_selector_label", "Qual ferramenta?"),
+        ("Excel", "Google Sheets", "VBA", "Google Apps Script")
     )
 
-    user_problem = st.text_area(
-        t("problem_description_label", "Descreva seu problema ou dúvida"),
-        height=150,
-        placeholder=t("problem_description_placeholder", "Ex: Como somar os valores da coluna A se a coluna B for 'Pago'?"),
-        key="problem_input"
+    problem_description = st.text_area(
+        t("problem_description_label", "Descreva o problema"),
+        height=120,
+        placeholder=t("problem_placeholder", "Ex: Quero somar a coluna A...")
     )
 
-    if st.button(t("generate_solution_button", "Gerar Solução"), type="primary", use_container_width=True):
-        if not user_problem:
-            st.warning(t("warning_message", "Por favor, descreva o problema antes de gerar uma solução."))
+    if st.button(t("generate_solution_button", "✨ Ekualizar"), type="primary", width="stretch"):
+        if not problem_description:
+            st.warning(t("warning_msg", "Descreva o problema primeiro."))
         else:
-            with st.spinner(t("spinner_text", "Analisando o problema e gerando a melhor solução...")):
-                # Define o nome do idioma para a IA com base na seleção do usuário
-                selected_language_name = language_map_for_ai.get(st.session_state.language, "Portuguese")
+            with st.spinner(t("spinner_msg", "Ekualizando...")):
+                raw_response = generate_solution(problem_description, selected_tool, API_KEY, st.session_state.language_code)
                 
-                api_response = generate_solution_rest(user_problem, tool, api_key, selected_language_name)
-                
-                if "error" in api_response:
-                    st.error(api_response["error"])
+                if isinstance(raw_response, dict) and "error" in raw_response:
+                    st.error(raw_response["error"])
                 else:
                     try:
-                        # Extrai o texto da resposta da IA
-                        raw_text = api_response['candidates'][0]['content']['parts'][0]['text']
+                        # Clean JSON (Remove ```json and ```)
+                        clean_text = re.sub(r'```json\s*|\s*```', '', raw_response).strip()
+                        response_data = json.loads(clean_text)
                         
-                        # Limpa a resposta de possíveis blocos de markdown
-                        clean_text = re.sub(r'```json\s*|\s*```', '', raw_text).strip()
+                        # Display Results
+                        st.success(t("success_msg", "Solução Encontrada!"))
                         
-                        # Converte o texto JSON para um dicionário Python
-                        solution_dict = json.loads(clean_text)
-
-                        # Exibe a UI melhorada
-                        st.success(t("success_solution_generated", "Solução Gerada com Sucesso!"))
-
-                        # 1. Código/Fórmula
-                        st.markdown(f"### {t('header_code', 'Código ou Fórmula')}")
-                        st.code(solution_dict.get("code", t("info_not_found", "Não encontrado")), language='vbnet' if tool == "VBA" else 'javascript' if tool == "Apps Script" else 'plaintext')
+                        # 1. Code/Formula
+                        st.markdown(f"**{t('code_label', 'Fórmula / Código')}:**")
                         
-                        # 2. Explicação
-                        st.markdown(f"### {t('header_explanation', 'Explicação')}")
-                        st.markdown(solution_dict.get("explanation", t("info_not_found", "Não encontrada")))
+                        lang_syntax = "excel"
+                        if "Script" in selected_tool:
+                            lang_syntax = "javascript"
+                        elif "VBA" in selected_tool:
+                            lang_syntax = "vbnet"
+                            
+                        st.code(response_data.get("code", ""), language=lang_syntax)
+                        
+                        # 2. Explanation
+                        st.info(f"💡 **Explicação:** {response_data.get('explanation', '')}")
+                        
+                        # 3. Tips
+                        with st.expander(f"📝 {t('tips_label', 'Passo a passo')}"):
+                            for tip in response_data.get("tips", []):
+                                st.markdown(f"- {tip}")
+                                
+                        # 4. Final CTA
+                        st.markdown("---")
+                        col1, col2 = st.columns([3, 1])
+                        with col1:
+                            st.caption(t("donate_caption", "Ajudou? Pague um café!"))
+                        with col2:
+                            st.link_button("☕ Café", BMC_LINK)
 
-                        # 3. Dicas de Aplicação
-                        with st.expander(f"📝 {t('expander_how_to_apply', 'Como aplicar a solução')}"):
-                            tips = solution_dict.get("tips", [])
-                            if tips:
-                                for i, tip in enumerate(tips, 1):
-                                    st.markdown(f"{i}. {tip}")
-                            else:
-                                st.info(t("info_no_tips", "Nenhuma dica de aplicação foi fornecida."))
+                    except json.JSONDecodeError:
+                        st.error("Erro ao processar resposta da IA.")
+                        st.write(raw_response)  # Debug
 
-                    except (json.JSONDecodeError, KeyError, IndexError, TypeError) as e:
-                        st.error(t("error_processing_response", "Ocorreu um erro ao processar a resposta da IA. A resposta pode estar em um formato inesperado."))
-                        st.code(f"{t('label_error_details', 'Detalhes do Erro')}: {e}\n\n{t('label_raw_response', 'Resposta Bruta Recebida:')}\n{api_response.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')}", language='text')
+# Footer
+st.markdown("---")
+st.markdown("<div style='text-align: center; color: gray;'>Lucas Bariza © 2026</div>", unsafe_allow_html=True)

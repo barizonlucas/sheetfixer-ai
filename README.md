@@ -1,11 +1,11 @@
-# SheetFixer.AI 🤖
+# Ekual 🟰
 
-SheetFixer.AI is a smart spreadsheet assistant that helps you generate formulas and scripts for Excel, Google Sheets, VBA, and Apps Script.
+Ekual is a smart spreadsheet assistant that helps you generate formulas and scripts for Excel, Google Sheets, VBA, and Apps Script using AI.
 
 ## Features
 
 -   **Smart Assistant:** Describe your problem in plain English and get the right formula or code.
--   **Multi-language Support:** The interface is available in English, Portuguese, and Spanish.
+-   **Multi-language Support:** The interface is available in English, Portuguese (with Pix support), and Spanish.
 -   **Tool Support:** Supports Excel, Google Sheets, VBA, and Apps Script.
 
 ## How to Run
@@ -39,7 +39,7 @@ The application is internationalized to support multiple languages.
 2.  **Update the language selector:**
     -   In `app.py`, add the new language to the `language_options` dictionary:
         ```python
-        language_options = {"English": "en", "Português": "pt", "Español": "es", "Français": "fr"}
+        LANGUAGE_OPTIONS = {"English": "en", "Português": "pt", "Español": "es", "Français": "fr"}
         ```
 
 That's it! The application will now support the new language.
