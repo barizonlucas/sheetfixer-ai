@@ -4,6 +4,7 @@ import json
 import requests
 from dotenv import load_dotenv
 import re
+from streamlit.components.v1 import html
 
 # 1. Configuração da Página (Sempre a primeira linha)
 st.set_page_config(
@@ -36,29 +37,19 @@ language_options = {
     "🇪🇸 Español": "es"
 }
 
+language_map_for_ai = {
+    "en": "English",
+    "pt": "Portuguese",
+    "es": "Spanish",
+}
+
 # Define o idioma padrão na session_state se não existir
 if 'language' not in st.session_state:
-    st.session_state.language = "🇧🇷 Português" # Default to Portuguese
+    st.session_state.language = "pt" # Default to Portuguese
 
-# UI da Sidebar
-with st.sidebar:
-    st.header("SheetFixer.AI")
-    
-    # Mapeia o código do idioma para o nome completo para o selectbox
-    lang_names = list(language_options.keys())
-    # Encontra o índice do idioma atual na session_state
-    current_lang_index = lang_names.index(next((name for name, code in language_options.items() if code == st.session_state.language), "🇧🇷 Português"))
-
-    selected_language_name = st.radio(
-        "Language / Idioma",
-        options=lang_names,
-        index=current_lang_index
-    )
-    # Atualiza o estado da sessão quando o usuário muda o idioma
-    st.session_state.language = language_options[selected_language_name]
-
-    st.divider()
-    st.markdown("Developed by Lucas Barizon")
+def update_language():
+    """Callback function to update the language in session state."""
+    st.session_state.language = language_options[st.session_state.lang_selector]
 
 # Carrega a tradução com base no estado da sessão
 lang = load_translation(st.session_state.language)
@@ -67,10 +58,44 @@ lang = load_translation(st.session_state.language)
 def t(key, default):
     return lang.get(key, default)
 
+# UI da Sidebar
+with st.sidebar:
+    st.header(t("sidebar_header", "SheetFixer.AI"))
+    
+    lang_names = list(language_options.keys())
+    # Encontra o nome do idioma atual a partir do código no estado da sessão
+    current_lang_name = next((name for name, code in language_options.items() if code == st.session_state.language), "🇧🇷 Português")
+    current_lang_index = lang_names.index(current_lang_name)
+
+    # Widget de rádio para seleção de idioma com callback
+    st.radio(
+        t("language_selector_label", "Language / Idioma"),
+        options=lang_names,
+        index=current_lang_index,
+        key='lang_selector',  # Chave para acessar o valor do widget
+        on_change=update_language  # Função a ser chamada na mudança
+    )
+
+    st.divider()
+    st.markdown(t("developed_by", "Developed by Lucas Barizon"))
+
+    # Condicional para exibir o botão ou o QR Code
+    if st.session_state.language == "pt":
+        if os.path.exists("assets/pix_qrcode.jpeg"):
+            st.image("assets/pix_qrcode.jpeg", width=280)
+            st.markdown(f"<p style='text-align: center;'>{t('buy_me_a_coffee_pix', 'Me pague um café')}</p>", unsafe_allow_html=True)
+        else:
+            st.warning(t("warning_qr_code_not_found", "A imagem do QR Code (assets/pix_qrcode.jpeg) não foi encontrada."))
+    else:
+        buy_me_a_coffee_script = """
+<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="lucasbariza" data-color="#FFDD00" data-emoji="" data-font="Cookie" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff"></script>
+"""
+        html(buy_me_a_coffee_script, height=70)
+
 # --- Backend (REST API Direta) ---
 def generate_solution_rest(problem, tool, api_key, language_name):
     if not api_key:
-        return {"error": t("error_api_key_not_found", "⚠️ API Key não encontrada. Configure o arquivo .env.")}
+        return {"error": t("api_key_error", "⚠️ API Key não encontrada. Configure o arquivo .env.")}
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
     headers = {"Content-Type": "application/json"}
@@ -85,7 +110,7 @@ def generate_solution_rest(problem, tool, api_key, language_name):
     OUTPUT FORMAT: Your response MUST be a single, raw JSON object (no markdown, no extra text, no code block markers like ```json).
     The JSON object must have the following keys:
     - "code": A string containing ONLY the formula or code script.
-    - "explanation": A brief, one or two-sentence summary of what the solution does.
+    - "explanation": A didactic explanation of the solution, simple and easy to understand (like 'for dummies'), suitable for laypeople. Do NOT use terms like 'for dummies' or 'laypeople' in the response.
     - "tips": A short list of strings with step-by-step instructions on how to apply the solution.
 
     EXAMPLE RESPONSE:
@@ -112,7 +137,7 @@ def generate_solution_rest(problem, tool, api_key, language_name):
         return {"error": f"❌ {t('error_connection', 'Erro de Conexão')}: {str(e)}"}
 
 # --- Frontend ---
-st.title("SheetFixer.AI 🤖")
+st.title(t("title", "SheetFixer.AI 🤖"))
 st.caption(t("caption", "Seu assistente inteligente para planilhas"))
 
 with st.container(border=True):
@@ -125,15 +150,18 @@ with st.container(border=True):
     user_problem = st.text_area(
         t("problem_description_label", "Descreva seu problema ou dúvida"),
         height=150,
-        placeholder=t("problem_placeholder", "Ex: Como somar os valores da coluna A se a coluna B for 'Pago'?"),
+        placeholder=t("problem_description_placeholder", "Ex: Como somar os valores da coluna A se a coluna B for 'Pago'?"),
         key="problem_input"
     )
 
     if st.button(t("generate_solution_button", "Gerar Solução"), type="primary", use_container_width=True):
         if not user_problem:
-            st.warning(t("warning_describe_problem", "Por favor, descreva o problema antes de gerar uma solução."))
+            st.warning(t("warning_message", "Por favor, descreva o problema antes de gerar uma solução."))
         else:
-            with st.spinner(t("spinner_processing", "Analisando o problema e gerando a melhor solução...")):
+            with st.spinner(t("spinner_text", "Analisando o problema e gerando a melhor solução...")):
+                # Define o nome do idioma para a IA com base na seleção do usuário
+                selected_language_name = language_map_for_ai.get(st.session_state.language, "Portuguese")
+                
                 api_response = generate_solution_rest(user_problem, tool, api_key, selected_language_name)
                 
                 if "error" in api_response:

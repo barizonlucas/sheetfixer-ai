@@ -15,5 +15,20 @@
     "api_call_error": "Ocorreu um erro ao chamar a API: {e}",
     "language_selector_label": "Idioma",
     "sidebar_title": "Como usar",
-    "sidebar_content": "1.  **Selecione a ferramenta** com a qual você está trabalhando (Excel, Google Sheets, etc.).\n2.  **Descreva o problema** ou tarefa que deseja realizar na caixa de texto. Seja o mais específico possível.\n3.  **Clique em 'Gerar Solução'**.\n\n**Exemplos de Prompts:**\n- Somar os valores da coluna A se o valor correspondente na coluna B for 'Concluído'.\n- Encontrar a média dos 10 maiores valores da coluna C.\n- Criar um script que envia um e-mail quando uma célula na coluna F é atualizada para 'Enviar'."
+    "sidebar_content": "1.  **Selecione a ferramenta** com a qual você está trabalhando (Excel, Google Sheets, etc.).\n2.  **Descreva o problema** ou tarefa que deseja realizar na caixa de texto. Seja o mais específico possível.\n3.  **Clique em 'Gerar Solução'**.\n\n**Exemplos de Prompts:**\n- Somar os valores da coluna A se o valor correspondente na coluna B for 'Concluído'.\n- Encontrar a média dos 10 maiores valores da coluna C.\n- Criar um script que envia um e-mail quando uma célula na coluna F é atualizada para 'Enviar'.",
+    "sidebar_header": "SheetFixer.AI",
+    "developed_by": "Desenvolvido por Lucas Barizon",
+    "buy_me_a_coffee_pix": "Me pague um café",
+    "warning_qr_code_not_found": "A imagem do QR Code (assets/pix_qrcode.jpeg) não foi encontrada.",
+    "error_google_api": "Erro do Google",
+    "error_connection": "Erro de Conexão",
+    "success_solution_generated": "Solução Gerada com Sucesso!",
+    "header_code": "Código ou Fórmula",
+    "info_not_found": "Não encontrado",
+    "header_explanation": "Explicação",
+    "expander_how_to_apply": "Como aplicar a solução",
+    "info_no_tips": "Nenhuma dica de aplicação foi fornecida.",
+    "error_processing_response": "Ocorreu um erro ao processar a resposta da IA. A resposta pode estar em um formato inesperado.",
+    "label_error_details": "Detalhes do Erro",
+    "label_raw_response": "Resposta Bruta Recebida:"
 }

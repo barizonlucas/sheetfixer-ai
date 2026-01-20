@@ -15,5 +15,20 @@
     "api_call_error": "Ocurrió un error al llamar a la API: {e}",
     "language_selector_label": "Idioma",
     "sidebar_title": "Cómo usar",
-    "sidebar_content": "1.  **Selecciona la herramienta** con la que estás trabajando (Excel, Google Sheets, etc.).\n2.  **Describe el problema** o tarea que quieres realizar en el cuadro de texto. Sé lo más específico posible.\n3.  **Haz clic en 'Generar Solución'**.\n\n**Ejemplos de Prompts:**\n- Sumar los valores de la columna A si el valor correspondiente en la columna B es 'Completado'.\n- Encontrar el promedio de los 10 valores más grandes de la columna C.\n- Crear un script que envíe un correo electrónico cuando una celda en la columna F se actualice a 'Enviar'."
+    "sidebar_content": "1.  **Selecciona la herramienta** con la que estás trabajando (Excel, Google Sheets, etc.).\n2.  **Describe el problema** o tarea que quieres realizar en el cuadro de texto. Sé lo más específico posible.\n3.  **Haz clic en 'Generar Solución'**.\n\n**Ejemplos de Prompts:**\n- Sumar los valores de la columna A si el valor correspondiente en la columna B es 'Completado'.\n- Encontrar el promedio de los 10 valores más grandes de la columna C.\n- Crear un script que envíe un correo electrónico cuando una celda en la columna F se actualice a 'Enviar'.",
+    "sidebar_header": "SheetFixer.AI",
+    "developed_by": "Desarrollado por Lucas Barizon",
+    "buy_me_a_coffee_pix": "Cómprame un café",
+    "warning_qr_code_not_found": "No se encontró la imagen del código QR (assets/pix_qrcode.jpeg).",
+    "error_google_api": "Error de Google",
+    "error_connection": "Error de conexión",
+    "success_solution_generated": "¡Solución generada con éxito!",
+    "header_code": "Código o Fórmula",
+    "info_not_found": "No encontrado",
+    "header_explanation": "Explicación",
+    "expander_how_to_apply": "Cómo aplicar la solución",
+    "info_no_tips": "No se proporcionaron consejos de aplicación.",
+    "error_processing_response": "Ocurrió un error al procesar la respuesta de la IA. La respuesta puede estar en un formato inesperado.",
+    "label_error_details": "Detalles del error",
+    "label_raw_response": "Respuesta bruta recibida:"
 }
