@@ -3,10 +3,14 @@ import json
 import requests
 import re
 import logging
+import io
+import pandas as pd
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import List, Dict, Any
 
 load_dotenv()
 API_KEY = os.getenv("GEMINI_API_KEY")
@@ -37,6 +41,9 @@ class GenerateRequest(BaseModel):
     tool: str
     lang_code: str
 
+class ExportRequest(BaseModel):
+    sample_data: List[Dict[str, Any]]
+
 @app.get("/api/config")
 def get_config():
     """Retorna configurações do ambiente (ex: links de doação)"""
@@ -55,6 +62,26 @@ def get_locales(lang_code: str):
         # Fallback para o inglês
         with open("locales/en.json", "r", encoding="utf-8") as f:
             return json.load(f)
+
+@app.post("/api/export-excel")
+def export_excel(request: ExportRequest):
+    """Gera um arquivo Excel em memória a partir dos dados de exemplo formatados e retorna para download"""
+    try:
+        df = pd.DataFrame(request.sample_data)
+        output = io.BytesIO()
+        
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Exemplo')
+        
+        output.seek(0)
+        headers = {
+            'Content-Disposition': 'attachment; filename="ekual_sample.xlsx"'
+        }
+        
+        return StreamingResponse(output, headers=headers, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    except Exception as e:
+        logger.error(f"Erro ao gerar Excel: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Ops! Ocorreu um erro ao gerar a planilha de exemplo.")
 
 @app.post("/api/generate")
 def generate_solution(request: GenerateRequest):
@@ -87,6 +114,7 @@ def generate_solution(request: GenerateRequest):
     - "code": The clean formula or script.
     - "explanation": A technical, concise breakdown for a professional peer. Use **bold** for function names. Use \n\n for spacing. No "AI fluff" (e.g., "Certainly!", "I hope this helps").
     - "tips": 2 brief, actionable technical tips (e.g., "Use $ for absolute references", "Format as Table first").
+    - "sample_data": A list of dictionaries representing 5 rows of realistic sample data related to the problem. The keys must be the column names. The last column MUST contain the suggested formula as a string starting exactly with '=' and using relative row references (like A2, B2).
 
     # TONE & STYLE
     - Professional, direct, and zero-redundancy.

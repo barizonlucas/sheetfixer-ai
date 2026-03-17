@@ -120,6 +120,32 @@ export default function App() {
     }
   };
 
+  const handleExportExcel = async () => {
+    if (!result || !result.sample_data) return;
+    
+    try {
+      const res = await fetch(`${API_URL}/export-excel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sample_data: result.sample_data })
+      });
+      
+      if (!res.ok) throw new Error(t("error_exporting", "Erro ao gerar arquivo Excel"));
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ekual_exemplo.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
@@ -215,6 +241,12 @@ export default function App() {
                <div className="bg-slate-950 p-4 rounded-lg mb-6 overflow-x-auto relative group">
                  <code className="text-coral-400 font-mono text-sm whitespace-pre-wrap break-all">{result.code}</code>
                </div>
+
+               {result.sample_data && result.sample_data.length > 0 && (
+                 <button onClick={handleExportExcel} className="mb-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg flex items-center justify-center gap-2 w-full sm:w-auto transition-all">
+                   <i className="fas fa-file-excel"></i> {t("download_excel_button", "📥 Baixar Planilha de Exemplo")}
+                 </button>
+               )}
 
                <div className="bg-blue-900/30 border-l-4 border-blue-500 p-4 rounded-lg mb-6">
                   <span className="block mb-3 text-base text-blue-100">💡 <strong>Explicação:</strong></span>
