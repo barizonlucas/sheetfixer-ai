@@ -12,18 +12,26 @@ Ekual is a smart spreadsheet assistant that helps you generate formulas and scri
 
 1.  **Install dependencies:**
     ```bash
-    pip install -r requirements.txt
+    cd backend && pip install -r requirements.txt
+    cd ../frontend && npm install
     ```
 
 2.  **Set up your environment:**
-    Create a `.env` file in the root of the project and add your Gemini API key:
+    Create a `.env` file inside the `backend/` directory and add your Gemini API key:
     ```
     GEMINI_API_KEY='YOUR_KEY_HERE'
     ```
 
 3.  **Run the app:**
+    Start the backend API:
     ```bash
-    streamlit run app.py
+    cd backend
+    uvicorn app:app --reload
+    ```
+    In another terminal, start the frontend:
+    ```bash
+    cd frontend
+    npm run dev
     ```
 
 ## Internationalization (i18n)

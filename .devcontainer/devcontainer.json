@@ -6,28 +6,34 @@
     "codespaces": {
       "openFiles": [
         "README.md",
-        "app.py"
+        "backend/app.py"
       ]
     },
     "vscode": {
       "settings": {},
       "extensions": [
         "ms-python.python",
-        "ms-python.vscode-pylance"
+        "ms-python.vscode-pylance",
+        "bradlc.vscode-tailwindcss"
       ]
     }
   },
-  "updateContentCommand": "[ -f packages.txt ] && sudo apt update && sudo apt upgrade -y && sudo xargs apt install -y <packages.txt; [ -f requirements.txt ] && pip3 install --user -r requirements.txt; pip3 install --user streamlit; echo '✅ Packages installed and Requirements met'",
+  "updateContentCommand": "sudo apt update && sudo apt install -y curl && curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt install -y nodejs && [ -f backend/requirements.txt ] && pip3 install --user -r backend/requirements.txt && cd frontend && npm install",
   "postAttachCommand": {
-    "server": "streamlit run app.py --server.enableCORS false --server.enableXsrfProtection false"
+    "backend": "cd backend && uvicorn app:app --host 0.0.0.0 --port 8000 --reload",
+    "frontend": "cd frontend && npm run dev"
   },
   "portsAttributes": {
-    "8501": {
-      "label": "Application",
+    "5173": {
+      "label": "Frontend Vite",
       "onAutoForward": "openPreview"
+    },
+    "8000": {
+      "label": "Backend FastAPI"
     }
   },
   "forwardPorts": [
-    8501
+    5173,
+    8000
   ]
 }

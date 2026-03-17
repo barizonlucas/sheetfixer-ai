@@ -1,12 +1,31 @@
-# Environments
+# =========================
+# Configurações Globais / OS
+# =========================
 .env
-venv/
-__pycache__/
+*.log
+.DS_Store
 
-# IDE / Editor specific
+# =========================
+# Backend (Python / FastAPI)
+# =========================
+venv/
+.venv/
+__pycache__/
+*.pyc
+backend/ekual_errors.log
+
+# =========================
+# Frontend (Node / Vite)
+# =========================
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+!frontend/.env.production
+
+# =========================
+# IDE / Editor
+# =========================
 .idea/
 .vscode/
 *.swp
-
-# Assets
-assets/
