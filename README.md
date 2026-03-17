@@ -1,53 +1,78 @@
 # Ekual 🟰
 
-Ekual is a smart spreadsheet assistant that helps you generate formulas and scripts for Excel, Google Sheets, VBA, and Apps Script using AI.
+Ekual is a smart spreadsheet assistant that helps you generate precise formulas and scripts for Excel, Google Sheets, VBA, and Apps Script using AI (Google Gemini 2.5). 
 
-## Features
+This project features a decoupled architecture, with a robust RESTful API backend and a modern Single Page Application (SPA) frontend.
 
--   **Smart Assistant:** Describe your problem in plain English and get the right formula or code.
--   **Multi-language Support:** The interface is available in English, Portuguese (with Pix support), and Spanish.
--   **Tool Support:** Supports Excel, Google Sheets, VBA, and Apps Script.
+## 🏗️ Architecture & Stack
 
-## How to Run
+- **Backend:** Python 3.11, FastAPI, Uvicorn, Pydantic.
+- **Frontend:** React.js (v18), Vite, Tailwind CSS.
+- **AI Integration:** Google Gemini API (`gemini-2.5-flash`).
 
-1.  **Install dependencies:**
-    ```bash
-    cd backend && pip install -r requirements.txt
-    cd ../frontend && npm install
-    ```
+## ✨ Features
 
-2.  **Set up your environment:**
-    Create a `.env` file inside the `backend/` directory and add your Gemini API key:
-    ```
-    GEMINI_API_KEY='YOUR_KEY_HERE'
-    ```
+- **Smart Assistant:** Describe your problem in plain English (or other languages) and get the right formula or code.
+- **Multi-language Support:** The interface and AI responses are fully available in English, Portuguese (with local Pix donation support), and Spanish.
+- **Tool Support:** Context-aware prompts tailored for Excel (modern 365), Google Sheets, VBA, and Apps Script.
+- **Beautiful UI:** Dark mode by default, creative loading states, and Markdown parsing for explanations.
 
-3.  **Run the app:**
-    Start the backend API:
-    ```bash
-    cd backend
-    uvicorn app:app --reload
-    ```
-    In another terminal, start the frontend:
-    ```bash
-    cd frontend
-    npm run dev
-    ```
+## 🚀 How to Run Locally
 
-## Internationalization (i18n)
+### Prerequisites
+- Node.js (v20+)
+- Python (v3.11+)
 
-The application is internationalized to support multiple languages.
+### 1. Backend Setup (FastAPI)
 
-### Adding a new language
+Open a terminal and navigate to the backend folder:
 
-1.  **Create a new translation file:**
-    -   In the `locales/` directory, create a new JSON file named with the two-letter language code (e.g., `fr.json` for French).
-    -   Copy the content of `locales/en.json` and translate the values.
+```bash
+cd backend
 
-2.  **Update the language selector:**
-    -   In `app.py`, add the new language to the `language_options` dictionary:
-        ```python
-        LANGUAGE_OPTIONS = {"English": "en", "Português": "pt", "Español": "es", "Français": "fr"}
-        ```
+# Install dependencies
+pip install -r requirements.txt
+```
 
-That's it! The application will now support the new language.
+Create a `.env` file inside the `backend/` directory and add your Gemini API key:
+```env
+GEMINI_API_KEY='YOUR_GEMINI_API_KEY'
+BMC_LINK='https://buymeacoffee.com/yourlink' # Optional
+```
+
+Start the backend server:
+```bash
+uvicorn app:app --reload
+```
+*The API will be available at `http://localhost:8000`*
+
+### 2. Frontend Setup (React + Vite)
+
+Open a new terminal and navigate to the frontend folder:
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev
+```
+*The frontend will be available at `http://localhost:5173`*
+
+## 🌍 Environment Variables
+
+### Frontend (`frontend/.env.production`)
+- `VITE_API_URL`: The URL of your backend API in production. 
+  - Defaults to `http://localhost:8000/api` during local development.
+  - Set this in your deployment platform (e.g., Vercel, Netlify) to your production backend URL (e.g., `https://api.yourdomain.com/api`).
+
+## 📦 Deployment
+
+### Backend
+The backend can be containerized using Docker or deployed directly to services like Render, Heroku, or AWS. Ensure the start command is:
+`uvicorn app:app --host 0.0.0.0 --port 8000`
+
+### Frontend
+To build the frontend for production, run `npm run build` inside the `frontend/` directory. This will generate a `dist` folder containing static files that can be easily hosted on Vercel, Netlify, AWS S3, or Cloudflare Pages.
