@@ -72,6 +72,13 @@ def export_excel(request: ExportRequest):
         
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df.to_excel(writer, index=False, sheet_name='Exemplo')
+            
+            # Força o reconhecimento de fórmulas para compatibilidade com Google Sheets
+            ws = writer.sheets['Exemplo']
+            for row in ws.iter_rows():
+                for cell in row:
+                    if isinstance(cell.value, str) and cell.value.startswith('='):
+                        cell.value = cell.value  # Aciona o setter do openpyxl (data_type='f')
         
         output.seek(0)
         headers = {
@@ -92,29 +99,31 @@ def generate_solution(request: GenerateRequest):
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={API_KEY}"
     headers = {"Content-Type": "application/json"}
     
-    language_map = {"pt": "Portuguese", "en": "English", "es": "Spanish"}
-    full_lang = language_map.get(request.lang_code, "English")
+    language_map = {"pt": "Portuguese (Brazil)", "en": "English", "es": "Spanish"}
+    target_lang = language_map.get(request.lang_code, "English")
 
     full_prompt = f"""
     # ROLE
     You are Ekual, a high-performance Spreadsheet Agent. Your goal is to provide precise formulas or scripts for Excel 365 and Google Sheets.
+    TARGET LANGUAGE: {target_lang} (Use this for ALL text fields in the JSON, except code_en).
 
     # PRIORITY DIRECTIVE
     1. ABSOLUTE PRIORITY: Solve the user's specific request. Do NOT suggest unrelated functions (like UNIQUE or FILTER) unless they are strictly necessary for the user's problem.
     2. If the user asks for text formatting (e.g., Capitalize), do NOT provide data counting/summarization.
 
     # EXECUTION RULES
-    - SEPARATOR: If request.lang_code == "pt", ALWAYS use semicolon (;) for formulas. If "en", use comma (,).
-    - LANGUAGE: If "pt", use translated function names (e.g., PROCV, SE, PRI.MAIUSC).
+    - SEPARATOR: If request.lang_code == "pt", ALWAYS use semicolon (;) for formulas in the "code" key. If "en", use comma (,).
+    - LANGUAGE: If "pt", use translated function names (e.g., PROCV, SE, PRI.MAIUSC) in the "code" key.
     - SCOPE: Assume datasets can exceed 1000 rows. Prefer column references (A:A) or Table references.
     - SAFETY: If the solution uses Dynamic Arrays, add a note about the #SPILL! (#DESPEJAR!) error.
 
     # OUTPUT STRUCTURE (JSON ONLY)
-    Return a JSON object with these exact keys:
-    - "code": The clean formula or script.
-    - "explanation": A technical, concise breakdown for a professional peer. Use **bold** for function names. Use \n\n for spacing. No "AI fluff" (e.g., "Certainly!", "I hope this helps").
-    - "tips": 2 brief, actionable technical tips (e.g., "Use $ for absolute references", "Format as Table first").
-    - "sample_data": A list of dictionaries representing 5 rows of realistic sample data related to the problem. The keys must be the column names. The last column MUST contain the suggested formula as a string starting exactly with '=' and using relative row references (like A2, B2).
+    Return a strictly valid JSON object with these exact keys. CRITICAL: You MUST escape all double quotes inside string values using a backslash. Example: \"=IF(A1=\\\"X\\\", 1, 0)\".
+    - "code": The clean formula or script formatted according to the user's language rules ({target_lang}).
+    - "code_en": The exact same formula but STRICTLY in English, using English function names (e.g., IF, VLOOKUP) and comma (,) as the separator.
+    - "explanation": A technical, concise breakdown for a professional peer, STRICTLY in {target_lang}. Use **bold** for function names. Use \n\n for spacing. No "AI fluff" (e.g., "Certainly!", "I hope this helps").
+    - "tips": A list of 2 brief, actionable technical tips, STRICTLY in {target_lang}.
+    - "sample_data": A list of dictionaries representing 5 rows of realistic sample data related to the problem. The keys must be the column names. The last column MUST contain the suggested formula as a string starting exactly with '=' and using relative row references (like A2, B2). CRITICAL: The formula inside sample_data MUST be the "code_en" version and any inner double quotes MUST be correctly escaped.
 
     # TONE & STYLE
     - Professional, direct, and zero-redundancy.
@@ -136,7 +145,7 @@ def generate_solution(request: GenerateRequest):
             
         raw_text = resp.json()['candidates'][0]['content']['parts'][0]['text']
         clean_text = re.sub(r'```json\s*|\s*```', '', raw_text).strip()
-        return json.loads(clean_text)
+        return json.loads(clean_text, strict=False)
     except HTTPException:
         # Se a exceção já foi tratada acima (como o erro 200 do requests), apenas a repassamos.
         raise

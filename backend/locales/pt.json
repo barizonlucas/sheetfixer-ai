@@ -8,5 +8,7 @@
     "success_msg": "✅ Solução Encontrada!",
     "code_label": "Fórmula / Código",
     "tips_label": "Como aplicar passo a passo",
-    "donate_caption": "A solução funcionou? Ajude o Ekual a continuar grátis!"
+    "donate_caption": "A solução funcionou? Ajude o Ekual a continuar grátis!",
+    "download_button": "📥 Baixar Planilha de Exemplo",
+    "download_tip": "💡 Dica: Se as fórmulas não carregarem automaticamente no Google Sheets, tente atualizar a página ou clicar na célula da fórmula."
 }

@@ -8,5 +8,7 @@
     "success_msg": "✅ Solution Found!",
     "code_label": "Formula / Code",
     "tips_label": "Step-by-step instructions",
-    "donate_caption": "Did it work? Help keep Ekual free!"
+    "donate_caption": "Did it work? Help keep Ekual free!",
+    "download_button": "📥 Download Example Spreadsheet",
+    "download_tip": "💡 Tip: If formulas don't load automatically in Google Sheets, try refreshing the page or clicking the formula cell."
 }

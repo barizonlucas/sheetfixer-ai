@@ -243,9 +243,14 @@ export default function App() {
                </div>
 
                {result.sample_data && result.sample_data.length > 0 && (
-                 <button onClick={handleExportExcel} className="mb-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg flex items-center justify-center gap-2 w-full sm:w-auto transition-all">
-                   <i className="fas fa-file-excel"></i> {t("download_excel_button", "📥 Baixar Planilha de Exemplo")}
-                 </button>
+                 <div className="mb-6">
+                   <button onClick={handleExportExcel} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg flex items-center justify-center gap-2 w-full sm:w-auto transition-all">
+                     <i className="fas fa-file-excel"></i> {t("download_button", "📥 Baixar Planilha de Exemplo")}
+                   </button>
+                   <p className="text-xs text-slate-400 mt-2">
+                     {t("download_tip", "💡 Dica: Se as fórmulas não carregarem automaticamente no Google Sheets, tente atualizar a página ou clicar na célula da fórmula.")}
+                   </p>
+                 </div>
                )}
 
                <div className="bg-blue-900/30 border-l-4 border-blue-500 p-4 rounded-lg mb-6">
