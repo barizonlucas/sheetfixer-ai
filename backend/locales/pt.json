@@ -10,5 +10,17 @@
     "tips_label": "Como aplicar passo a passo",
     "donate_caption": "A solução funcionou? Ajude o Ekual a continuar grátis!",
     "download_button": "📥 Baixar Planilha de Exemplo",
-    "download_tip": "💡 Dica: Se as fórmulas não carregarem automaticamente no Google Sheets, tente atualizar a página ou clicar na célula da fórmula."
+    "download_tip": "💡 Dica: Se as fórmulas não carregarem automaticamente no Google Sheets, tente atualizar a página ou clicar na célula da fórmula.",
+    "language_label": "Idioma",
+    "support_label": "Apoie o projeto",
+    "pix_label": "Pix (Brasil):",
+    "slogan": "Sua dúvida vira fórmula.",
+    "error_api": "Erro de API",
+    "error_exporting": "Erro ao gerar arquivo Excel",
+    "loading_messages": [
+        "Analisando seu pedido...",
+        "Mapeando células da planilha...",
+        "Consultando os deuses das fórmulas...",
+        "Ekualizando a solução perfeita..."
+    ]
 }

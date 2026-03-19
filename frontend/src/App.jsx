@@ -1,48 +1,21 @@
 import { useState, useEffect } from 'react';
 import pixImage from './assets/pix_qrcode.jpeg';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+const API_URL = import.meta.env.VITE_API_URL || "/api";
 
-const SLOGANS = {
-  en: "Your question becomes a formula.",
-  pt: "Sua dúvida vira fórmula.",
-  es: "Tu duda se convierte en fórmula."
-};
-
-const LOADING_MESSAGES = {
-  en: [
-    "Analyzing your request...",
-    "Mapping spreadsheet cells...",
-    "Consulting the formula gods...",
-    "Ekualizing the final code..."
-  ],
-  pt: [
-    "Analisando seu pedido...",
-    "Mapeando células da planilha...",
-    "Consultando os deuses das fórmulas...",
-    "Ekualizando a solução perfeita..."
-  ],
-  es: [
-    "Analizando tu petición...",
-    "Mapeando celdas de la hoja...",
-    "Consultando a los dioses de las fórmulas...",
-    "Ekualizando la solución perfecta..."
-  ]
-};
-
-// Interpretador simples de Markdown para HTML
+// Simple Markdown to HTML interpreter
 const formatMarkdown = (text) => {
   if (!text) return { __html: '' };
   
   let html = text
-    // 1. Remove excesso de quebras de linha (3 ou mais viram apenas 2)
+    // 1. Remove excess line breaks (3 or more become just 2)
     .replace(/\n{3,}/g, '\n\n')
-    // 2. Converte Negrito: **texto** para <strong>
+    // 2. Convert Bold: **text** to <strong>
     .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
-    // 3. Converte Código em Linha: `código` para <code> com visual de célula
+    // 3. Convert Inline Code: `code` to <code> with cell styling
     .replace(/`(.*?)`/g, '<code class="bg-blue-950/60 text-emerald-300 px-1.5 py-0.5 rounded font-mono text-xs shadow-sm">$1</code>');
     
-  // 4. Converte Listas: linhas que começam com * ou -
+  // 4. Convert Lists: lines starting with * or -
   html = html.replace(/(?:^ *[-*]\s+.*(?:\r?\n|$))+/gm, (match) => {
       const listItems = match.trim().split(/\r?\n/).map(item => `<li class="ml-6 list-disc mb-1">${item.replace(/^ *[-*]\s+/, '')}</li>`).join('');
       return `<ul class="my-1">${listItems}</ul>`;
@@ -69,24 +42,24 @@ export default function App() {
     fetch(`${API_URL}/config`)
       .then(res => res.json())
       .then(data => setConfig(data))
-      .catch(err => console.error("Erro ao carregar configs:", err));
+      .catch(err => console.error("Error loading configs:", err));
   }, []);
 
   useEffect(() => {
     fetch(`${API_URL}/locales/${lang}`)
       .then(res => res.json())
       .then(data => setTranslations(data))
-      .catch(err => console.error("Erro ao carregar traduções:", err));
+      .catch(err => console.error("Error loading translations:", err));
   }, [lang]);
 
-  // Efeito para rotacionar as mensagens de loading enquanto carrega
+  // Effect to rotate loading messages while processing
   useEffect(() => {
     let interval;
     if (loading) {
-      setLoadingStep(0); // Reseta para a primeira mensagem
+      setLoadingStep(0);
       interval = setInterval(() => {
         setLoadingStep(prev => prev + 1);
-      }, 2500); // Troca a mensagem a cada 2.5s
+      }, 2500);
     }
     return () => clearInterval(interval);
   }, [loading]);
@@ -111,7 +84,7 @@ export default function App() {
       });
       const data = await res.json();
       
-      if (!res.ok) throw new Error(data.detail || "Erro de API");
+      if (!res.ok) throw new Error(data.detail || t("error_api", "API Error"));
       setResult(data);
     } catch (err) {
       setError(err.message);
@@ -130,13 +103,13 @@ export default function App() {
         body: JSON.stringify({ sample_data: result.sample_data })
       });
       
-      if (!res.ok) throw new Error(t("error_exporting", "Erro ao gerar arquivo Excel"));
+      if (!res.ok) throw new Error(t("error_exporting", "Error generating Excel file"));
       
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'ekual_exemplo.xlsx';
+      a.download = 'ekual_sample.xlsx';
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -145,6 +118,14 @@ export default function App() {
       alert(err.message);
     }
   };
+
+  const loadingMessages = t("loading_messages", [
+    "Analyzing your request...",
+    "Mapping spreadsheet cells...",
+    "Consulting the formula gods...",
+    "Ekualizing the final code..."
+  ]);
+  const slogan = t("slogan", "Your question becomes a formula.");
 
   return (
     <div className="flex min-h-screen">
@@ -155,7 +136,7 @@ export default function App() {
         </div>
 
         <nav className="flex-grow">
-          <h3 className="text-sm font-semibold text-slate-500 uppercase mb-2">Idioma</h3>
+          <h3 className="text-sm font-semibold text-slate-500 uppercase mb-2">{t("language_label", "Language")}</h3>
           <ul className="space-y-1">
             {['en', 'pt', 'es'].map(l => (
               <li key={l}>
@@ -168,10 +149,10 @@ export default function App() {
         </nav>
 
         <div className="mt-auto pt-8">
-          <h3 className="text-sm font-semibold text-slate-500 uppercase mb-2">Apoie o projeto</h3>
+          <h3 className="text-sm font-semibold text-slate-500 uppercase mb-2">{t("support_label", "Support the project")}</h3>
           {lang === 'pt' ? (
              <div className="p-4 bg-slate-800 rounded-lg text-center">
-                <p className="text-sm text-slate-300 font-bold mb-2">Pix (Brasil):</p>
+                <p className="text-sm text-slate-300 font-bold mb-2">{t("pix_label", "Pix (Brazil):")}</p>
                 <img src={pixImage} alt="QR Code Pix" className="w-full max-w-[150px] mx-auto rounded-lg shadow-md mb-3" />
              </div>
           ) : (
@@ -194,7 +175,7 @@ export default function App() {
 
           <header className="text-center mb-10 mt-8">
             <h1 className="text-5xl md:text-6xl font-extrabold text-white">Eku<span className="text-coral-500">a</span>l</h1>
-            <p className="mt-3 text-lg text-slate-400">{SLOGANS[lang]}</p>
+            <p className="mt-3 text-lg text-slate-400">{slogan}</p>
           </header>
 
           <div className="bg-slate-900 p-6 md:p-8 rounded-xl shadow-2xl">
@@ -226,7 +207,7 @@ export default function App() {
             <div className="mt-8 flex flex-col items-center justify-center py-10 bg-slate-900/50 rounded-xl border border-emerald-500/20 shadow-inner animate-fade-in">
                <div className="text-5xl animate-bounce mb-6 text-coral-500 drop-shadow-lg">🟰</div>
                <p className="text-emerald-400 font-medium text-lg animate-pulse text-center px-4">
-                 {LOADING_MESSAGES[lang][loadingStep % LOADING_MESSAGES[lang].length]}
+                 {loadingMessages[loadingStep % loadingMessages.length]}
                </p>
             </div>
           )}
