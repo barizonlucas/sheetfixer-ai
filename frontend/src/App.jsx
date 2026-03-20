@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
+import ReactGA from 'react-ga4';
 import pixImage from './assets/pix_qrcode.jpeg';
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
+const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID;
+
+if (GA_MEASUREMENT_ID) {
+  ReactGA.initialize(GA_MEASUREMENT_ID);
+}
 
 // Simple Markdown to HTML interpreter
 const formatMarkdown = (text) => {
@@ -37,6 +43,12 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
+
+  useEffect(() => {
+    if (GA_MEASUREMENT_ID) {
+      ReactGA.send({ hitType: "pageview", page: window.location.pathname, title: "Ekual Home" });
+    }
+  }, []);
 
   useEffect(() => {
     fetch(`${API_URL}/config`)
@@ -86,8 +98,25 @@ export default function App() {
       
       if (!res.ok) throw new Error(data.detail || t("error_api", "API Error"));
       setResult(data);
+
+      // Rastrear conversão: Geração de Solução
+      if (GA_MEASUREMENT_ID) {
+        ReactGA.event({
+          category: "Solution",
+          action: "Generate",
+          label: tool
+        });
+      }
     } catch (err) {
       setError(err.message);
+      // Rastrear erro de API no painel do GA
+      if (GA_MEASUREMENT_ID) {
+        ReactGA.event({
+          category: "Error",
+          action: "API Fetch Error",
+          label: err.message || "Unknown Error"
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -114,6 +143,14 @@ export default function App() {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
+
+      // Rastrear conversão: Exportação de Excel
+      if (GA_MEASUREMENT_ID) {
+        ReactGA.event({
+          category: "Export",
+          action: "Download Excel"
+        });
+      }
     } catch (err) {
       alert(err.message);
     }
@@ -131,8 +168,8 @@ export default function App() {
     <div className="flex min-h-screen">
       {/* Sidebar */}
       <aside className={`bg-slate-900 text-slate-300 w-64 flex-shrink-0 flex flex-col p-4 fixed top-0 md:sticky h-screen overflow-y-auto transition-transform duration-300 z-50 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-        <div className="text-2xl font-bold text-white mb-8">
-          Ekual <span className="text-coral-500">🟰</span>
+        <div className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
+          Ekual <img src="/logo.png" alt="Ekual logo" className="w-8 h-8" />
         </div>
 
         <nav className="flex-grow">
@@ -157,7 +194,7 @@ export default function App() {
              </div>
           ) : (
              <div className="text-center">
-                <a href={config.bmc_link || "#"} target="_blank" rel="noreferrer" className="inline-block">
+                <a href={config.bmc_link || import.meta.env.VITE_BMC_LINK || "https://www.buymeacoffee.com/lucasbariza"} target="_blank" rel="noreferrer" className="inline-block">
                   <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" className="h-10 w-auto rounded" />
                 </a>
              </div>
@@ -169,7 +206,9 @@ export default function App() {
       <main className="flex-1 p-4 md:p-8 overflow-y-auto w-full">
         <div className="max-w-3xl mx-auto">
           <div className="md:hidden flex justify-between items-center mb-6">
-            <div className="text-2xl font-bold text-white">Ekual <span className="text-coral-500">🟰</span></div>
+            <div className="text-2xl font-bold text-white flex items-center gap-2">
+              Ekual <img src="/favicon.svg" alt="Ekual logo" className="w-8 h-8 bg-transparent" />
+            </div>
             <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="text-white text-2xl"><i className="fas fa-bars"></i></button>
           </div>
 
